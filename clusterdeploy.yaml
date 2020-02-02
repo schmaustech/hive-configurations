@@ -1,0 +1,73 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    creationTimestamp: null
+    name: kni5-pull-secret
+  stringData:
+    .dockerconfigjson: 'PULLSECRETHERE'
+  type: kubernetes.io/dockerconfigjson
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    creationTimestamp: null
+    name: kni5-ssh-private-key
+  stringData:
+    ssh-privatekey: |
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      INSERT PRIVATE KEY HERE
+      -----END OPENSSH PRIVATE KEY-----
+  type: Opaque
+- apiVersion: hive.openshift.io/v1
+  kind: ClusterDeployment
+  metadata:
+    creationTimestamp: null
+    name: kni5
+    annotations:
+      hive.openshift.io/try-install-once: "true"
+      hive.openshift.io/ssh-known-host: "PROVISIONINGHOSTKNOWNHOSTSTRING"
+  spec:
+    baseDomain: schmaustech.com
+    clusterName: kni5
+    controlPlaneConfig:
+      servingCertificates: {}
+    images:
+      installerImagePullPolicy: Always
+    installed: false
+    platform:
+      bareMetal: {}
+    provisioning:
+      releaseImage: quay.io/openshift-release-dev/ocp-release-nightly@sha256:73007e97e00d526426c116b1a35d8103bd00a887656d065b7979ab2e8de44b17
+      installConfigSecretRef:
+        name: kni5-install-config
+      sshPrivateKeySecretRef:
+        name: kni5-ssh-private-key
+      manifestsConfigMapRef:
+        name: kni5-install-manifests
+    pullSecretRef:
+      name: kni5-pull-secret
+  status:
+    clusterVersionStatus:
+      availableUpdates: null
+      desired:
+        force: false
+        image: ""
+        version: ""
+      observedGeneration: 0
+      versionHash: ""
+- apiVersion: hive.openshift.io/v1
+  kind: MachinePool
+  metadata:
+    creationTimestamp: null
+    name: kni5-worker
+  spec:
+    clusterDeploymentRef:
+      name: kni5
+    name: worker
+    platform:
+      bareMetal: {}
+    replicas: 0
+  status: {}
+kind: List
+metadata: {}
